@@ -20,14 +20,15 @@ DISPLAY_NAME="${2:-}"
 INSTALL_DIR="/opt/server-agent"
 
 # Python 확인 및 설치
-if ! command -v python3 &> /dev/null; then
-    echo "[1/4] Python3 설치 중..."
+if ! command -v python3 &> /dev/null || ! command -v pip3 &> /dev/null; then
+    echo "[1/4] Python3 및 pip3 설치 중..."
     if command -v apt-get &> /dev/null; then
+        sudo apt-get update -yq
         sudo apt-get install -y python3 python3-pip
     elif command -v yum &> /dev/null; then
         sudo yum install -y python3 python3-pip
     else
-        echo "[오류] Python3를 수동으로 설치하세요."
+        echo "[오류] Python3 및 pip3를 수동으로 설치하세요."
         exit 1
     fi
 fi

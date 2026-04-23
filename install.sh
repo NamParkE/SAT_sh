@@ -23,7 +23,7 @@ DISPLAY_NAME="${2:-}"
 INSTALL_DIR="/opt/server-agent"
 
 # Python 확인 및 설치
-if ! command -v python3 &> /dev/null || ! command -v pip3 &> /dev/null || ! python3 -m venv -h &> /dev/null; then
+if ! command -v python3 &> /dev/null || ! command -v pip3 &> /dev/null || ! python3 -c "import ensurepip" &> /dev/null; then
     echo "[1/4] Python3, pip3 및 venv 설치 중..."
     if command -v apt-get &> /dev/null; then
         sudo apt-get update -yq

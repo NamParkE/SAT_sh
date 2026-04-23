@@ -75,7 +75,7 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable server-agent
-sudo systemctl start server-agent
+sudo systemctl restart server-agent
 
 echo ""
 echo "============================================"

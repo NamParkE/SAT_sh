@@ -4,6 +4,9 @@
 
 set -e
 
+# apt-get 설치 시 상호작용 프롬프트 무시 (debconf 경고 방지)
+export DEBIAN_FRONTEND=noninteractive
+
 echo "============================================"
 echo "  서버 접속 관리 시스템 - 에이전트 설치"
 echo "============================================"
@@ -20,15 +23,15 @@ DISPLAY_NAME="${2:-}"
 INSTALL_DIR="/opt/server-agent"
 
 # Python 확인 및 설치
-if ! command -v python3 &> /dev/null || ! command -v pip3 &> /dev/null; then
-    echo "[1/4] Python3 및 pip3 설치 중..."
+if ! command -v python3 &> /dev/null || ! command -v pip3 &> /dev/null || ! python3 -m venv -h &> /dev/null; then
+    echo "[1/4] Python3, pip3 및 venv 설치 중..."
     if command -v apt-get &> /dev/null; then
         sudo apt-get update -yq
-        sudo apt-get install -y python3 python3-pip
+        sudo apt-get install -y python3 python3-pip python3-venv
     elif command -v yum &> /dev/null; then
         sudo yum install -y python3 python3-pip
     else
-        echo "[오류] Python3 및 pip3를 수동으로 설치하세요."
+        echo "[오류] Python3, pip3 및 venv를 수동으로 설치하세요."
         exit 1
     fi
 fi
@@ -39,7 +42,9 @@ echo "[1.5/4] 에이전트 스크립트 다운로드..."
 sudo curl -sSL "$SERVER_URL/agent/agent-script" -o "$INSTALL_DIR/agent.py"
 
 echo "[2/4] Python 패키지 설치..."
-sudo pip3 install websockets paramiko psutil --quiet
+# PEP 668(externally-managed-environment) 대응을 위해 가상환경(venv) 생성 및 설치
+sudo python3 -m venv "$INSTALL_DIR/venv"
+sudo "$INSTALL_DIR/venv/bin/pip" install websockets paramiko psutil --quiet
 
 echo "[3/4] 설정 파일 생성..."
 sudo tee "$INSTALL_DIR/config.env" > /dev/null << EOF
@@ -58,7 +63,7 @@ Wants=network-online.target
 Type=simple
 User=root
 EnvironmentFile=${INSTALL_DIR}/config.env
-ExecStart=python3 ${INSTALL_DIR}/agent.py --server \${SERVER_URL} --name "\${DISPLAY_NAME}"
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/agent.py --server \${SERVER_URL} --name "\${DISPLAY_NAME}"
 Restart=always
 RestartSec=15
 StandardOutput=journal
